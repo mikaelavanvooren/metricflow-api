@@ -36,8 +36,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- API documentation - this is the library that has no Boot 3 / Jakarta path.
-             Project was archived; last release only supports javax namespace. -->
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-boot-starter</artifactId>
