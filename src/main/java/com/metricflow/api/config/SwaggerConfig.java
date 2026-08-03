@@ -1,13 +1,12 @@
 package com.metricflow.api.config;
 
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
 
 @Configuration
 public class SwaggerConfig {
@@ -15,38 +14,36 @@ public class SwaggerConfig {
     // Public-facing docs: only the metrics endpoints, versioned separately
     // from internal dashboard config endpoints.
     @Bean
-    public Docket publicApiDocket() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("public-metrics")
-                .apiInfo(apiInfo())
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("com.metricflow.api.controller"))
-                .paths(PathSelectors.ant("/api/v1/metrics/**"))
+    public GroupedOpenApi publicApiDocket() {
+        return GroupedOpenApi.builder()
+                .group("public-metrics")
+                .pathsToMatch("/api/v1/metrics/**")
                 .build();
     }
 
     // Internal docs: dashboard management, not exposed to external partners.
     @Bean
-    public Docket internalApiDocket() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("internal-dashboards")
-                .apiInfo(apiInfo())
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("com.metricflow.api.controller"))
-                .paths(PathSelectors.ant("/api/v1/dashboards/**"))
+    public GroupedOpenApi internalApiDocket() {
+        return GroupedOpenApi.builder()
+                .group("internal-dashboards")
+                .pathsToMatch("/api/v1/dashboards/**")
                 .build();
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfo(
-                "MetricFlow API",
-                "Metrics and dashboard endpoints for the MetricFlow analytics platform",
-                "0.1.0",
-                "https://metricflow.example.com/terms",
-                new Contact("Platform Team", "https://metricflow.example.com", "platform@metricflow.example.com"),
-                "Internal Use Only",
-                "",
-                java.util.Collections.emptyList()
-        );
+    @Bean
+    public OpenAPI metricFlowOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("MetricFlow API")
+                        .description("Metrics and dashboard endpoints for the MetricFlow analytics platform")
+                        .version("0.1.0")
+                        .termsOfService("https://metricflow.example.com/terms")
+                        .contact(new Contact()
+                                .name("Platform Team")
+                                .url("https://metricflow.example.com")
+                                .email("platform@metricflow.example.com"))
+                        .license(new License()
+                                .name("Internal Use Only")
+                                .url("")));
     }
 }

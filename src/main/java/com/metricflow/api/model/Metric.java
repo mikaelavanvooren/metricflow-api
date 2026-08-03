@@ -1,10 +1,11 @@
 package com.metricflow.api.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class Metric {
@@ -16,6 +17,9 @@ public class Metric {
     @NotNull
     private String name;
 
+    // "value" is a reserved keyword in H2 2.x (managed by Spring Boot 4), so
+    // map the field to a non-reserved column name. The Java API is unchanged.
+    @Column(name = "metric_value")
     private double value;
 
     private String unit;
