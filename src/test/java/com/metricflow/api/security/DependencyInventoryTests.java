@@ -94,7 +94,7 @@ class DependencyInventoryTests {
 
         assertThat(loaded).isNotEmpty();
         assertThat(loaded).extracting(DependencyCoordinate::getMavenName)
-                .contains("org.springframework.boot:spring-boot", "io.springfox:springfox-boot-starter");
+                .contains("org.springframework.boot:spring-boot", "org.springdoc:springdoc-openapi-starter-webmvc-ui");
     }
 
     @Test

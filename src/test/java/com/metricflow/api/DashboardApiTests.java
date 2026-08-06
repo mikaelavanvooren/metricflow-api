@@ -1,10 +1,10 @@
 package com.metricflow.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,7 +31,7 @@ class DashboardApiTests {
         String body = mockMvc.perform(post("/api/v1/dashboards")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.format("{\"title\":\"%s\",\"owner\":\"%s\",\"shared\":%s}", title, owner, shared)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return MAPPER.readTree(body);
     }
@@ -78,14 +78,12 @@ class DashboardApiTests {
                 .andExpect(jsonPath("$[*].title").value("Unshared"));
     }
 
-    // Documented behaviour and actual behaviour differ: deleteDashboard is declared void on a
-    // @DeleteMapping, so Spring returns 200 rather than the documented 204.
     @Test
-    void deleteRemovesDashboardAndReturnsOk() throws Exception {
+    void deleteRemovesDashboardAndReturnsNoContent() throws Exception {
         long id = createDashboard("Doomed", "delete@metricflow.test", false).get("id").asLong();
 
         mockMvc.perform(delete("/api/v1/dashboards/{id}", id))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/v1/dashboards").param("owner", "delete@metricflow.test"))
                 .andExpect(status().isOk())
@@ -93,8 +91,8 @@ class DashboardApiTests {
     }
 
     @Test
-    void deletingUnknownDashboardIsTolerated() throws Exception {
+    void deletingUnknownDashboardReturnsNotFound() throws Exception {
         mockMvc.perform(delete("/api/v1/dashboards/{id}", 999999))
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
     }
 }

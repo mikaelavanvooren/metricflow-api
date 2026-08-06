@@ -145,7 +145,7 @@ class ConfigChecksTests {
     @Test
     void flagsPubliclyReadableApiDocumentation() {
         MockEnvironment environment = new MockEnvironment()
-                .withProperty("springfox.documentation.swagger-ui.enabled", "true");
+                .withProperty("springdoc.swagger-ui.enabled", "true");
 
         ConfigFinding finding = evaluate(ConfigChecks.apiDocsProtected(),
                 context(environment, "2.7.18", JAVA_11));

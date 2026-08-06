@@ -52,7 +52,7 @@ class SecurityScanServiceTests {
     private static ConfigCheckContext configContext() {
         MockEnvironment environment = new MockEnvironment()
                 .withProperty("spring.jpa.hibernate.ddl-auto", "update")
-                .withProperty("springfox.documentation.swagger-ui.enabled", "true");
+                .withProperty("springdoc.swagger-ui.enabled", "true");
         return new ConfigCheckContext(environment, "2.7.18", 55, "11.0.22", className -> false);
     }
 

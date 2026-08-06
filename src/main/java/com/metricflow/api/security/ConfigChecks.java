@@ -144,8 +144,7 @@ public final class ConfigChecks {
         return new AbstractCheck("api-docs-protected", "API documentation is not public") {
             @Override
             public ConfigFinding evaluate(ConfigCheckContext context) {
-                boolean uiEnabled = isEnabled(context, "springfox.documentation.swagger-ui.enabled")
-                        || isEnabled(context, "springdoc.swagger-ui.enabled");
+                boolean uiEnabled = isEnabled(context, "springdoc.swagger-ui.enabled");
                 boolean secured = context.isClassPresent(HTTP_SECURITY_CLASS);
                 if (uiEnabled && !secured) {
                     return ConfigFinding.failing(getId(), getTitle(), Severity.MEDIUM,
