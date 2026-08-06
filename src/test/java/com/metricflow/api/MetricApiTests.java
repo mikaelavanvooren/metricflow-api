@@ -1,10 +1,10 @@
 package com.metricflow.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -12,7 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,7 +30,7 @@ class MetricApiTests {
         String body = mockMvc.perform(post("/api/v1/metrics")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.format("{\"name\":\"%s\",\"value\":%s,\"unit\":\"%s\"}", name, value, unit)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return MAPPER.readTree(body);
     }
@@ -65,12 +64,9 @@ class MetricApiTests {
                 .andExpect(jsonPath("$.name").value("error_rate"));
     }
 
-    // Documented behaviour and actual behaviour differ: MetricsService.findById returns null
-    // for an unknown id, which Spring renders as 200 with an empty body rather than 404.
     @Test
-    void unknownMetricIdReturnsEmptyBodyNotNotFound() throws Exception {
+    void unknownMetricIdReturnsNotFound() throws Exception {
         mockMvc.perform(get("/api/v1/metrics/{id}", 999999))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andExpect(status().isNotFound());
     }
 }

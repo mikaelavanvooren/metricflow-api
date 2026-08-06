@@ -1,9 +1,11 @@
 package com.metricflow.api.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -29,7 +31,10 @@ public class SnapshotStore {
     private static final String PREFIX = "scan-";
     private static final String SUFFIX = ".json";
 
-    private final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    // Jackson 3 mappers are immutable, so features are selected on the builder rather than switched
+    // on afterwards.
+    private final ObjectMapper mapper =
+            JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build();
     private final Path directory;
     private final int historyLimit;
 
@@ -52,7 +57,7 @@ public class SnapshotStore {
             Path target = directory.resolve(PREFIX + snapshot.getScanId() + SUFFIX);
             mapper.writeValue(target.toFile(), snapshot);
             prune();
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             log.warn("Could not persist security scan snapshot: {}", e.getMessage());
         }
     }
@@ -66,7 +71,7 @@ public class SnapshotStore {
         for (Path file : listFiles()) {
             try {
                 snapshots.add(mapper.readValue(file.toFile(), ScanSnapshot.class));
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 log.warn("Ignoring unreadable snapshot {}: {}", file.getFileName(), e.getMessage());
             }
         }

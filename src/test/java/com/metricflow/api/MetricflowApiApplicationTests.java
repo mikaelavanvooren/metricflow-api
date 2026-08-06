@@ -1,6 +1,8 @@
 package com.metricflow.api;
 
 import org.junit.jupiter.api.Test;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springdoc.webmvc.api.OpenApiWebMvcResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
@@ -18,10 +20,12 @@ class MetricflowApiApplicationTests {
         assertThat(context).isNotNull();
     }
 
-    // springfox 3.0.0 only bootstraps when spring.mvc.pathmatch.matching-strategy is
-    // ant_path_matcher; this bean is the one that fails without it.
+    // A misconfigured docs setup fails at context startup rather than at compile time, so the
+    // resource that serves the documents and the path-filtered groups are both asserted. The
+    // third group, security, is conditional and absent unless that feature is enabled.
     @Test
-    void springfoxBootstrapped() {
-        assertThat(context.containsBean("documentationPluginsBootstrapper")).isTrue();
+    void apiDocumentationBootstrapped() {
+        assertThat(context.getBeansOfType(OpenApiWebMvcResource.class)).isNotEmpty();
+        assertThat(context.getBeansOfType(GroupedOpenApi.class)).hasSize(2);
     }
 }

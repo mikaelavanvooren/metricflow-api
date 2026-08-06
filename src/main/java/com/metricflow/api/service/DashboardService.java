@@ -28,7 +28,8 @@ public class DashboardService {
         return dashboard;
     }
 
-    public void delete(Long id) {
-        store.remove(id);
+    /** @return whether a dashboard was actually removed, so the caller can distinguish 204 from 404. */
+    public boolean delete(Long id) {
+        return store.remove(id) != null;
     }
 }
