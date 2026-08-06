@@ -1,5 +1,6 @@
 package com.metricflow.api.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.PathSelectors;
@@ -34,6 +35,21 @@ public class SwaggerConfig {
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.metricflow.api.controller"))
                 .paths(PathSelectors.ant("/api/v1/dashboards/**"))
+                .build();
+    }
+
+    // Security docs: dependency and configuration findings. Registered only when the feature is
+    // enabled, since the other two dockets filter by path and would otherwise leave these
+    // endpoints undocumented while still routable.
+    @Bean
+    @ConditionalOnProperty(prefix = "metricflow.security", name = "enabled", havingValue = "true")
+    public Docket securityApiDocket() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("security")
+                .apiInfo(apiInfo())
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.metricflow.api.security"))
+                .paths(PathSelectors.ant("/api/v1/security/**"))
                 .build();
     }
 

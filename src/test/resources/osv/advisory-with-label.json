@@ -1,0 +1,46 @@
+{
+  "id": "GHSA-rc42-6c7j-7h5r",
+  "summary": "Spring Boot EndpointRequest.to() creates wrong matcher if actuator endpoint is not exposed",
+  "details": "EndpointRequest.to() creates a matcher for null/** if the actuator endpoint is disabled.",
+  "aliases": ["CVE-2025-22235"],
+  "modified": "2026-02-04T02:35:01.941827Z",
+  "published": "2025-04-28T09:31:53Z",
+  "database_specific": {
+    "cwe_ids": ["CWE-20", "CWE-862"],
+    "severity": "HIGH"
+  },
+  "severity": [
+    { "type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L" }
+  ],
+  "references": [
+    { "type": "ADVISORY", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-22235" },
+    { "type": "WEB", "url": "https://spring.io/security/cve-2025-22235" },
+    { "type": "WEB", "url": "https://spring.io/security/cve-2025-22235" }
+  ],
+  "affected": [
+    {
+      "package": { "name": "org.springframework.boot:spring-boot", "ecosystem": "Maven" },
+      "ranges": [
+        { "type": "ECOSYSTEM", "events": [{ "introduced": "0" }, { "last_affected": "2.7.24.2" }] }
+      ]
+    },
+    {
+      "package": { "name": "org.springframework.boot:spring-boot", "ecosystem": "Maven" },
+      "ranges": [
+        { "type": "ECOSYSTEM", "events": [{ "introduced": "3.3.0" }, { "fixed": "3.3.11" }] }
+      ]
+    },
+    {
+      "package": { "name": "org.springframework.boot:spring-boot", "ecosystem": "Maven" },
+      "ranges": [
+        { "type": "ECOSYSTEM", "events": [{ "introduced": "3.4.0" }, { "fixed": "3.4.5" }] }
+      ]
+    },
+    {
+      "package": { "name": "com.example:unrelated-artifact", "ecosystem": "Maven" },
+      "ranges": [
+        { "type": "ECOSYSTEM", "events": [{ "introduced": "0" }, { "fixed": "99.0.0" }] }
+      ]
+    }
+  ]
+}
