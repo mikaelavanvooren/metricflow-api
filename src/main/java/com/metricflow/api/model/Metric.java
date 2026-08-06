@@ -1,5 +1,6 @@
 package com.metricflow.api.model;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,6 +17,9 @@ public class Metric {
     @NotNull
     private String name;
 
+    // "value" is a reserved word in H2 2.x, so the generated DDL fails unless the column
+    // is named explicitly. The JSON field name is unaffected.
+    @Column(name = "metric_value")
     private double value;
 
     private String unit;
