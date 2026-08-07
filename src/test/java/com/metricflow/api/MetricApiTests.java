@@ -1,13 +1,13 @@
 package com.metricflow.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,9 +41,9 @@ class MetricApiTests {
         JsonNode created = createMetric("requests_per_second", 12.5, "rps");
 
         assertThat(created.get("id").asLong()).isPositive();
-        assertThat(created.get("name").asText()).isEqualTo("requests_per_second");
+        assertThat(created.get("name").asString()).isEqualTo("requests_per_second");
         assertThat(created.get("value").asDouble()).isEqualTo(12.5);
-        assertThat(created.get("unit").asText()).isEqualTo("rps");
+        assertThat(created.get("unit").asString()).isEqualTo("rps");
     }
 
     @Test
