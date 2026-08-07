@@ -4,7 +4,7 @@ import com.metricflow.api.MetricflowApiApplication;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -36,8 +36,8 @@ public class SecurityScanConfiguration {
     @Bean
     public RestTemplate osvRestTemplate(RestTemplateBuilder builder, SecurityProperties properties) {
         return builder
-                .setConnectTimeout(properties.getConnectTimeout())
-                .setReadTimeout(properties.getReadTimeout())
+                .connectTimeout(properties.getConnectTimeout())
+                .readTimeout(properties.getReadTimeout())
                 .build();
     }
 

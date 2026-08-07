@@ -145,10 +145,10 @@ class ConfigChecksTests {
     @Test
     void flagsPubliclyReadableApiDocumentation() {
         MockEnvironment environment = new MockEnvironment()
-                .withProperty("springfox.documentation.swagger-ui.enabled", "true");
+                .withProperty("springdoc.swagger-ui.enabled", "true");
 
         ConfigFinding finding = evaluate(ConfigChecks.apiDocsProtected(),
-                context(environment, "2.7.18", JAVA_11));
+                context(environment, "4.0.7", JAVA_17));
 
         assertThat(finding.isPassing()).isFalse();
         assertThat(finding.getSeverity()).isEqualTo(Severity.MEDIUM);
@@ -161,8 +161,25 @@ class ConfigChecksTests {
         assertThat(evaluate(ConfigChecks.apiDocsProtected(),
                 context(uiOn, "3.4.5", JAVA_17, HTTP_SECURITY)).isPassing()).isTrue();
 
+        // Both surfaces have to be off: either one alone still publishes the API shape.
+        MockEnvironment docsOff = new MockEnvironment()
+                .withProperty("springdoc.swagger-ui.enabled", "false")
+                .withProperty("springdoc.api-docs.enabled", "false");
         assertThat(evaluate(ConfigChecks.apiDocsProtected(),
-                context(new MockEnvironment(), "3.4.5", JAVA_17)).isPassing()).isTrue();
+                context(docsOff, "3.4.5", JAVA_17)).isPassing()).isTrue();
+    }
+
+    /**
+     * springdoc publishes documentation without any property being set, so the default
+     * configuration has to be reported as exposed rather than as off.
+     */
+    @Test
+    void flagsApiDocumentationThatIsOnByDefault() {
+        ConfigFinding finding = evaluate(ConfigChecks.apiDocsProtected(),
+                context(new MockEnvironment(), "4.0.7", JAVA_17));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.MEDIUM);
     }
 
     @Test

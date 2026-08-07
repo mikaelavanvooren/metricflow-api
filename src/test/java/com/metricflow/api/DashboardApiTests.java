@@ -1,13 +1,13 @@
 package com.metricflow.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -41,8 +41,8 @@ class DashboardApiTests {
         JsonNode created = createDashboard("Revenue", "create@metricflow.test", false);
 
         assertThat(created.get("id").asLong()).isPositive();
-        assertThat(created.get("title").asText()).isEqualTo("Revenue");
-        assertThat(created.get("owner").asText()).isEqualTo("create@metricflow.test");
+        assertThat(created.get("title").asString()).isEqualTo("Revenue");
+        assertThat(created.get("owner").asString()).isEqualTo("create@metricflow.test");
         assertThat(created.get("shared").asBoolean()).isFalse();
     }
 
