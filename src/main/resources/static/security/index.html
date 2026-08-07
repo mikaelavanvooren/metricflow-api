@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MetricFlow security scan</title>
+    <link rel="stylesheet" href="security.css">
+</head>
+<body>
+<header class="page-header">
+    <div>
+        <h1>Security scan</h1>
+        <p class="subtitle" id="scan-meta">Loading&hellip;</p>
+    </div>
+    <button id="rescan" type="button">Rescan</button>
+</header>
+
+<div id="alert" class="alert" hidden></div>
+
+<main id="content" hidden>
+    <section class="cards" id="cards"></section>
+
+    <section class="panel">
+        <h2>Findings by severity</h2>
+        <div id="severity-chart" class="chart"></div>
+    </section>
+
+    <section class="panel">
+        <h2>Change since the previous scan</h2>
+        <p class="hint" id="diff-meta"></p>
+        <div class="diff-columns">
+            <div>
+                <h3 class="diff-heading fixed">Fixed <span id="fixed-count" class="pill">0</span></h3>
+                <ul id="fixed-list" class="finding-list"></ul>
+            </div>
+            <div>
+                <h3 class="diff-heading introduced">New <span id="introduced-count" class="pill">0</span></h3>
+                <ul id="introduced-list" class="finding-list"></ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Total findings over time</h2>
+        <div id="history-chart" class="sparkline"></div>
+        <p class="hint" id="history-meta"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Configuration checks</h2>
+        <ul id="config-list" class="check-list"></ul>
+    </section>
+
+    <section class="panel">
+        <h2>Vulnerable dependencies</h2>
+        <div class="table-scroll">
+            <table id="dependency-table">
+                <thead>
+                <tr>
+                    <th>Dependency</th>
+                    <th>Version</th>
+                    <th>Advisory</th>
+                    <th>Severity</th>
+                    <th>CVSS</th>
+                    <th>Fixed in</th>
+                    <th>Summary</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <p class="hint" id="dependency-meta"></p>
+    </section>
+</main>
+
+<script src="security.js"></script>
+</body>
+</html>

@@ -59,6 +59,29 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <!-- A running JVM cannot recover the Maven coordinates of its own classpath, so the
+                 resolved dependency tree is written to the classpath at build time for the
+                 /api/v1/security scanner to read. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>record-dependency-inventory</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>list</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/META-INF/metricflow-dependencies.txt</outputFile>
+                            <sort>true</sort>
+                            <outputAbsoluteArtifactFilename>false</outputAbsoluteArtifactFilename>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

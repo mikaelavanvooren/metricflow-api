@@ -1,0 +1,212 @@
+package com.metricflow.api.security;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ConfigChecksTests {
+
+    private static final String HTTP_SECURITY =
+            "org.springframework.security.config.annotation.web.builders.HttpSecurity";
+
+    private static final int JAVA_11 = 55;
+    private static final int JAVA_17 = 61;
+
+    private static ConfigCheckContext context(MockEnvironment environment,
+                                              String bootVersion,
+                                              int bytecodeMajor,
+                                              String... presentClasses) {
+        List<String> present = java.util.Arrays.asList(presentClasses);
+        return new ConfigCheckContext(environment, bootVersion, bytecodeMajor, "11.0.22", present::contains);
+    }
+
+    private static ConfigFinding evaluate(ConfigCheck check, ConfigCheckContext context) {
+        return check.evaluate(context);
+    }
+
+    @Test
+    void flagsSpringBootLinesThatNoLongerReceivePatches() {
+        ConfigFinding finding = evaluate(ConfigChecks.springBootSupported(),
+                context(new MockEnvironment(), "2.7.18", JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.HIGH);
+        assertThat(finding.getDetail()).contains("2.7.18");
+    }
+
+    @Test
+    void acceptsSupportedSpringBootLines() {
+        assertThat(evaluate(ConfigChecks.springBootSupported(),
+                context(new MockEnvironment(), "3.4.5", JAVA_17)).isPassing()).isTrue();
+        assertThat(evaluate(ConfigChecks.springBootSupported(),
+                context(new MockEnvironment(), "4.1.0", JAVA_17)).isPassing()).isTrue();
+        // 3.0 went out of OSS support at the same time as 2.7.
+        assertThat(evaluate(ConfigChecks.springBootSupported(),
+                context(new MockEnvironment(), "3.0.13", JAVA_17)).isPassing()).isFalse();
+    }
+
+    @Test
+    void reportsUnknownWhenTheSpringBootVersionCannotBeRead() {
+        ConfigFinding finding = evaluate(ConfigChecks.springBootSupported(),
+                context(new MockEnvironment(), null, JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.UNKNOWN);
+    }
+
+    @Test
+    void flagsAMissingSpringSecurity() {
+        ConfigFinding finding = evaluate(ConfigChecks.springSecurityPresent(),
+                context(new MockEnvironment(), "2.7.18", JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.HIGH);
+    }
+
+    @Test
+    void acceptsAPresentSpringSecurity() {
+        assertThat(evaluate(ConfigChecks.springSecurityPresent(),
+                context(new MockEnvironment(), "3.4.5", JAVA_17, HTTP_SECURITY)).isPassing()).isTrue();
+    }
+
+    /**
+     * The check reads the class file version of the application itself, not the running JDK, so a
+     * project compiled with --release 11 is reported accurately even on a newer JVM.
+     */
+    @Test
+    void flagsBytecodeTargetsBelowTheSupportedJavaBaseline() {
+        ConfigFinding finding = evaluate(ConfigChecks.javaBaseline(),
+                context(new MockEnvironment(), "2.7.18", JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.MEDIUM);
+        assertThat(finding.getDetail()).contains("Java 11");
+    }
+
+    @Test
+    void acceptsCurrentBytecodeTargets() {
+        assertThat(evaluate(ConfigChecks.javaBaseline(),
+                context(new MockEnvironment(), "3.4.5", JAVA_17)).isPassing()).isTrue();
+        assertThat(evaluate(ConfigChecks.javaBaseline(),
+                context(new MockEnvironment(), "3.4.5", 65)).isPassing()).isTrue();
+    }
+
+    @Test
+    void reportsUnknownWhenTheClassFileVersionCannotBeRead() {
+        assertThat(evaluate(ConfigChecks.javaBaseline(),
+                context(new MockEnvironment(), "3.4.5", -1)).getSeverity()).isEqualTo(Severity.UNKNOWN);
+    }
+
+    @Test
+    void mapsClassFileVersionsToJavaReleases() {
+        assertThat(ConfigCheckContext.javaFeatureRelease(55)).isEqualTo(11);
+        assertThat(ConfigCheckContext.javaFeatureRelease(61)).isEqualTo(17);
+        assertThat(ConfigCheckContext.javaFeatureRelease(65)).isEqualTo(21);
+        assertThat(ConfigCheckContext.javaFeatureRelease(0)).isEqualTo(-1);
+    }
+
+    @Test
+    void flagsSchemaMutatingDdlModes() {
+        for (String mode : new String[] { "update", "create", "create-drop", "CREATE-DROP" }) {
+            MockEnvironment environment = new MockEnvironment()
+                    .withProperty("spring.jpa.hibernate.ddl-auto", mode);
+            ConfigFinding finding = evaluate(ConfigChecks.schemaNotAutoGenerated(),
+                    context(environment, "2.7.18", JAVA_11));
+
+            assertThat(finding.isPassing()).withFailMessage("expected %s to fail", mode).isFalse();
+            assertThat(finding.getSeverity()).isEqualTo(Severity.MEDIUM);
+        }
+    }
+
+    @Test
+    void acceptsNonMutatingDdlModes() {
+        assertThat(evaluate(ConfigChecks.schemaNotAutoGenerated(),
+                context(new MockEnvironment().withProperty("spring.jpa.hibernate.ddl-auto", "validate"),
+                        "3.4.5", JAVA_17)).isPassing()).isTrue();
+        // Unset means Hibernate does not touch the schema for a non-embedded datasource.
+        assertThat(evaluate(ConfigChecks.schemaNotAutoGenerated(),
+                context(new MockEnvironment(), "3.4.5", JAVA_17)).isPassing()).isTrue();
+    }
+
+    /** Regenerating the schema is the norm under test, so it should not be reported there. */
+    @Test
+    void toleratesSchemaGenerationUnderTheTestProfile() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("spring.jpa.hibernate.ddl-auto", "update");
+        environment.setActiveProfiles("test");
+
+        assertThat(evaluate(ConfigChecks.schemaNotAutoGenerated(),
+                context(environment, "2.7.18", JAVA_11)).isPassing()).isTrue();
+    }
+
+    @Test
+    void flagsPubliclyReadableApiDocumentation() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("springfox.documentation.swagger-ui.enabled", "true");
+
+        ConfigFinding finding = evaluate(ConfigChecks.apiDocsProtected(),
+                context(environment, "2.7.18", JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.MEDIUM);
+    }
+
+    @Test
+    void acceptsApiDocumentationWhenAuthenticationIsAvailableOrDocsAreOff() {
+        MockEnvironment uiOn = new MockEnvironment()
+                .withProperty("springdoc.swagger-ui.enabled", "true");
+        assertThat(evaluate(ConfigChecks.apiDocsProtected(),
+                context(uiOn, "3.4.5", JAVA_17, HTTP_SECURITY)).isPassing()).isTrue();
+
+        assertThat(evaluate(ConfigChecks.apiDocsProtected(),
+                context(new MockEnvironment(), "3.4.5", JAVA_17)).isPassing()).isTrue();
+    }
+
+    @Test
+    void flagsAnEnabledH2Console() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("spring.h2.console.enabled", "true");
+
+        ConfigFinding finding = evaluate(ConfigChecks.h2ConsoleDisabled(),
+                context(environment, "2.7.18", JAVA_11));
+
+        assertThat(finding.isPassing()).isFalse();
+        assertThat(finding.getSeverity()).isEqualTo(Severity.HIGH);
+    }
+
+    @Test
+    void acceptsADisabledH2Console() {
+        assertThat(evaluate(ConfigChecks.h2ConsoleDisabled(),
+                context(new MockEnvironment(), "2.7.18", JAVA_11)).isPassing()).isTrue();
+        assertThat(evaluate(ConfigChecks.h2ConsoleDisabled(),
+                context(new MockEnvironment().withProperty("spring.h2.console.enabled", "false"),
+                        "2.7.18", JAVA_11)).isPassing()).isTrue();
+    }
+
+    @Test
+    void everyCheckReportsOnceWithAStableUniqueId() {
+        List<ConfigFinding> findings = ConfigChecks.evaluateAll(
+                context(new MockEnvironment(), "2.7.18", JAVA_11));
+
+        assertThat(findings).hasSize(ConfigChecks.all().size());
+        assertThat(findings).extracting(ConfigFinding::getId).doesNotHaveDuplicates();
+        assertThat(findings).allSatisfy(finding -> {
+            assertThat(finding.getId()).isNotBlank();
+            assertThat(finding.getTitle()).isNotBlank();
+            assertThat(finding.getDetail()).isNotBlank();
+        });
+    }
+
+    /** A passing check carries no severity, so it can never inflate the outstanding-risk counts. */
+    @Test
+    void passingChecksCarryNoSeverity() {
+        List<ConfigFinding> findings = ConfigChecks.evaluateAll(
+                context(new MockEnvironment(), "4.1.0", JAVA_17, HTTP_SECURITY));
+
+        assertThat(findings).filteredOn(ConfigFinding::isPassing)
+                .allSatisfy(finding -> assertThat(finding.getSeverity()).isEqualTo(Severity.UNKNOWN));
+    }
+}
