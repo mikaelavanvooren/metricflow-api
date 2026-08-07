@@ -3,10 +3,10 @@ package com.metricflow.api.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -32,7 +32,7 @@ class SecurityReportApiTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private SecurityScanService scanService;
 
     private static Vulnerability vulnerability() {
@@ -211,11 +211,11 @@ class SecurityReportApiTests {
 
     @Test
     void documentsTheSecurityGroupInSwagger() throws Exception {
-        mockMvc.perform(get("/swagger-resources"))
+        mockMvc.perform(get("/v3/api-docs/swagger-config"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.name == 'security')]").exists());
+                .andExpect(jsonPath("$.urls[?(@.name == 'security')]").exists());
 
-        mockMvc.perform(get("/v2/api-docs").param("group", "security"))
+        mockMvc.perform(get("/v3/api-docs/security"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/security/scan']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/security/summary']").exists())
@@ -228,7 +228,7 @@ class SecurityReportApiTests {
     @Test
     void keepsSecurityPathsOutOfTheOtherGroups() throws Exception {
         for (String group : new String[] { "public-metrics", "internal-dashboards" }) {
-            mockMvc.perform(get("/v2/api-docs").param("group", group))
+            mockMvc.perform(get("/v3/api-docs/" + group))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.paths['/api/v1/security/scan']").doesNotExist());
         }

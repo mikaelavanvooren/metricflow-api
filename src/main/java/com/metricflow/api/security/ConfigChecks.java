@@ -44,6 +44,7 @@ public final class ConfigChecks {
     /**
      * Spring Boot 2.7 reached end of OSS support on 2023-11-24 and 3.0 on 2023-11-24 as well;
      * anything below 3.1 receives no free security patches, so new CVEs are never fixed for it.
+     * Boot 4.x satisfies this, as the comparison is a lower bound rather than an allow-list.
      */
     static ConfigCheck springBootSupported() {
         return new AbstractCheck("spring-boot-supported", "Spring Boot receives security patches") {
@@ -144,8 +145,11 @@ public final class ConfigChecks {
         return new AbstractCheck("api-docs-protected", "API documentation is not public") {
             @Override
             public ConfigFinding evaluate(ConfigCheckContext context) {
-                boolean uiEnabled = isEnabled(context, "springfox.documentation.swagger-ui.enabled")
-                        || isEnabled(context, "springdoc.swagger-ui.enabled");
+                // springdoc serves /swagger-ui.html and /v3/api-docs unless explicitly switched
+                // off, so an absent property means exposed. Testing for a truthy value here would
+                // report the default configuration as safe.
+                boolean uiEnabled = isEnabledUnlessDisabled(context, "springdoc.swagger-ui.enabled")
+                        || isEnabledUnlessDisabled(context, "springdoc.api-docs.enabled");
                 boolean secured = context.isClassPresent(HTTP_SECURITY_CLASS);
                 if (uiEnabled && !secured) {
                     return ConfigFinding.failing(getId(), getTitle(), Severity.MEDIUM,
@@ -176,6 +180,11 @@ public final class ConfigChecks {
 
     private static boolean isEnabled(ConfigCheckContext context, String key) {
         return Boolean.parseBoolean(context.property(key));
+    }
+
+    /** For features that are on out of the box, where an unset property means enabled. */
+    private static boolean isEnabledUnlessDisabled(ConfigCheckContext context, String key) {
+        return !"false".equalsIgnoreCase(context.property(key));
     }
 
     private static int majorOf(String version) {

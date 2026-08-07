@@ -1,10 +1,11 @@
 package com.metricflow.api.security;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,7 +23,7 @@ import java.util.Map;
  * Reports the vulnerabilities present in this deployment: published advisories affecting the
  * resolved dependency tree, plus configuration checks.
  */
-@Api(tags = "Security")
+@Tag(name = "Security")
 @RestController
 @RequestMapping("/api/v1/security")
 @ConditionalOnProperty(prefix = "metricflow.security", name = "enabled", havingValue = "true")
@@ -34,25 +35,26 @@ public class SecurityReportController {
         this.scanService = scanService;
     }
 
-    @ApiOperation(value = "Full vulnerability scan",
-            notes = "Advisories for every resolved dependency plus the configuration checks. "
+    @Operation(summary = "Full vulnerability scan",
+            description = "Advisories for every resolved dependency plus the configuration checks. "
                     + "Results are cached; pass refresh=true to query the advisory database again.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Scan completed"),
-            @ApiResponse(code = 400, message = "Unrecognised minSeverity value"),
-            @ApiResponse(code = 503, message = "Scan could not be produced")
+            @ApiResponse(responseCode = "200", description = "Scan completed"),
+            @ApiResponse(responseCode = "400", description = "Unrecognised minSeverity value"),
+            @ApiResponse(responseCode = "503", description = "Scan could not be produced")
     })
     @GetMapping("/scan")
     public SecurityScanReport scan(
-            @ApiParam(value = "Lowest severity to include", allowableValues = "LOW,MEDIUM,HIGH,CRITICAL")
+            @Parameter(description = "Lowest severity to include",
+                    schema = @Schema(allowableValues = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}))
             @RequestParam(required = false) String minSeverity,
-            @ApiParam("Bypass the cached result and rescan")
+            @Parameter(description = "Bypass the cached result and rescan")
             @RequestParam(defaultValue = "false") boolean refresh) {
         return scanService.scan(refresh, parseSeverity(minSeverity));
     }
 
-    @ApiOperation(value = "Scan totals only",
-            notes = "Counts without the finding detail, for badges and health checks.")
+    @Operation(summary = "Scan totals only",
+            description = "Counts without the finding detail, for badges and health checks.")
     @GetMapping("/summary")
     public Map<String, Object> summary() {
         SecurityScanReport report = scanService.scan(false);
@@ -70,24 +72,24 @@ public class SecurityReportController {
         return summary;
     }
 
-    @ApiOperation(value = "Scan history", notes = "Recorded scans, oldest first.")
+    @Operation(summary = "Scan history", description = "Recorded scans, oldest first.")
     @GetMapping("/history")
     public List<ScanSnapshot> history() {
         return scanService.history();
     }
 
-    @ApiOperation(value = "Compare two scans",
-            notes = "Defaults to the previous scan against the latest, which shows what a fix "
+    @Operation(summary = "Compare two scans",
+            description = "Defaults to the previous scan against the latest, which shows what a fix "
                     + "removed and what a change introduced.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Diff computed"),
-            @ApiResponse(code = 503, message = "Not enough scan history to compare")
+            @ApiResponse(responseCode = "200", description = "Diff computed"),
+            @ApiResponse(responseCode = "503", description = "Not enough scan history to compare")
     })
     @GetMapping("/diff")
     public ScanDiff diff(
-            @ApiParam("Baseline scan id; defaults to the scan before the latest")
+            @Parameter(description = "Baseline scan id; defaults to the scan before the latest")
             @RequestParam(required = false) String from,
-            @ApiParam("Comparison scan id; defaults to the latest scan")
+            @Parameter(description = "Comparison scan id; defaults to the latest scan")
             @RequestParam(required = false) String to) {
         return scanService.diff(from, to);
     }

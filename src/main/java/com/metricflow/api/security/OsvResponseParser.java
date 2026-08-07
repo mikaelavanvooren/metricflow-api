@@ -1,6 +1,6 @@
 package com.metricflow.api.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public final class OsvResponseParser {
             List<String> ids = new ArrayList<>();
             if (results != null && results.isArray() && i < results.size()) {
                 for (JsonNode vuln : results.get(i).path("vulns")) {
-                    String id = vuln.path("id").asText(null);
+                    String id = vuln.path("id").asString(null);
                     if (id != null && !id.isEmpty()) {
                         ids.add(id);
                     }
@@ -51,7 +51,7 @@ public final class OsvResponseParser {
         if (root == null || root.isMissingNode()) {
             return Optional.empty();
         }
-        String id = root.path("id").asText(null);
+        String id = root.path("id").asString(null);
         if (id == null || id.isEmpty()) {
             return Optional.empty();
         }
@@ -61,7 +61,7 @@ public final class OsvResponseParser {
 
         // An advisory's own label is authoritative where present; a locally computed CVSS score is
         // only a fallback, since not every advisory carries a vector either.
-        Severity severity = Severity.fromLabel(root.path("database_specific").path("severity").asText(null));
+        Severity severity = Severity.fromLabel(root.path("database_specific").path("severity").asString(null));
         if (severity == Severity.UNKNOWN && score != null) {
             severity = Severity.fromScore(score);
         }
@@ -75,8 +75,8 @@ public final class OsvResponseParser {
                 summary(root),
                 fixedVersions(root, packageName),
                 references(root),
-                root.path("published").asText(null),
-                root.path("modified").asText(null)));
+                root.path("published").asString(null),
+                root.path("modified").asString(null)));
     }
 
     private static String cvssVector(JsonNode root) {
@@ -87,8 +87,8 @@ public final class OsvResponseParser {
         // Prefer the newest CVSS revision the advisory offers.
         String best = null;
         for (JsonNode entry : severities) {
-            String type = entry.path("type").asText("");
-            String score = entry.path("score").asText(null);
+            String type = entry.path("type").asString("");
+            String score = entry.path("score").asString(null);
             if (score == null || score.isEmpty()) {
                 continue;
             }
@@ -102,11 +102,11 @@ public final class OsvResponseParser {
     }
 
     private static String summary(JsonNode root) {
-        String summary = root.path("summary").asText(null);
+        String summary = root.path("summary").asString(null);
         if (summary != null && !summary.trim().isEmpty()) {
             return summary.trim();
         }
-        String details = root.path("details").asText(null);
+        String details = root.path("details").asString(null);
         if (details == null || details.trim().isEmpty()) {
             return null;
         }
@@ -118,13 +118,13 @@ public final class OsvResponseParser {
     private static List<String> fixedVersions(JsonNode root, String packageName) {
         LinkedHashSet<String> fixed = new LinkedHashSet<>();
         for (JsonNode affected : root.path("affected")) {
-            String name = affected.path("package").path("name").asText("");
+            String name = affected.path("package").path("name").asString("");
             if (packageName != null && !packageName.isEmpty() && !packageName.equals(name)) {
                 continue;
             }
             for (JsonNode range : affected.path("ranges")) {
                 for (JsonNode event : range.path("events")) {
-                    String version = event.path("fixed").asText(null);
+                    String version = event.path("fixed").asString(null);
                     if (version != null && !version.isEmpty()) {
                         fixed.add(version);
                     }
@@ -137,7 +137,7 @@ public final class OsvResponseParser {
     private static List<String> references(JsonNode root) {
         LinkedHashSet<String> urls = new LinkedHashSet<>();
         for (JsonNode reference : root.path("references")) {
-            String url = reference.path("url").asText(null);
+            String url = reference.path("url").asString(null);
             if (url != null && !url.isEmpty()) {
                 urls.add(url);
             }
@@ -149,7 +149,7 @@ public final class OsvResponseParser {
         List<String> values = new ArrayList<>();
         if (array.isArray()) {
             for (JsonNode entry : array) {
-                String text = entry.asText(null);
+                String text = entry.asString(null);
                 if (text != null && !text.isEmpty()) {
                     values.add(text);
                 }

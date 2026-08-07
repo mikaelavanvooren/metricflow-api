@@ -1,9 +1,5 @@
 package com.metricflow.api.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -11,6 +7,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,7 +115,7 @@ public class OsvClient implements AdvisorySource {
                     perDependency.put(chunk.get(i), ids.get(i));
                 }
             }
-        } catch (RestClientException | com.fasterxml.jackson.core.JsonProcessingException e) {
+        } catch (RestClientException | tools.jackson.core.JacksonException e) {
             throw new OsvUnavailableException("OSV batch query failed: " + e.getMessage(), e);
         }
         return perDependency;
